@@ -91,6 +91,13 @@ export default function Dashboard() {
         });
     };
 
+    const extractWarning = (rawAdvice) => {
+        if (!rawAdvice) return null;
+        const match = rawAdvice.match(/\[(?:PERINGATAN|CATATAN):[^\]]+\]/i);
+        if (!match) return null;
+        return match[0].replace(/^\[|\]$/g, "").trim();
+    };
+
     const getCleanAdvice = (actionName, rawAdvice) => {
         if (aiLoading) return "Memuat rekomendasi AI...";
         if (!rawAdvice) return "Pola pengeluaran Anda: Hemat. AI belum mendeteksi riwayat pengeluaran Anda. Mulailah bertransaksi untuk mendapatkan rekomendasi finansial dan prediksi tabungan.";
@@ -99,12 +106,18 @@ export default function Dashboard() {
         const cleanedAdvice = rawAdvice
             .replace(/\(\s*Hemat\s*Rp[\d.,]+\s*\/\s*hari\s*\)/gi, "")
             .replace(/\bHemat\s*Rp[\d.,]+\s*\/\s*hari\b/gi, "")
+            .replace(/\[(?:PERINGATAN|CATATAN):[^\]]+\]/gi, "")
             .replace(/\(\s*\)/g, "")
             .replace(/\s{2,}/g, " ")
             .replace(/\s+([.,!?;:])/g, "$1")
             .trim();
 
         return cleanedAdvice;
+    };
+
+    const getWarningText = () => {
+        if (aiLoading || !aiData) return null;
+        return extractWarning(aiData?.advice);
     };
 
     const getSavingsPerDay = () => {
@@ -381,15 +394,33 @@ export default function Dashboard() {
                                     </svg>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] font-black text-green-600 uppercase tracking-wider mb-1">REKOMENDASI HEMAT</p>
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap sm:flex-nowrap">
+                                        <p className="text-[10px] font-black text-green-600 uppercase tracking-wider whitespace-nowrap">
+                                            REKOMENDASI HEMAT
+                                        </p>
+                                    </div>
                                     <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-medium leading-relaxed">
                                         {getCleanAdvice(aiData?.action_name, aiData?.advice)}
                                     </p>
-                                    <div className="mt-2 flex items-center gap-1.5 bg-[#f2fbf4] dark:bg-green-950/30 px-3 py-1 rounded-full border border-green-100 dark:border-green-900/50 w-fit">
-                                        <FiCheck className="w-3.5 h-3.5 text-[#52933e]" />
-                                        <span className="text-xs font-bold text-[#52933e]">
-                                            {getSavingsPerDay() > 0 ? `Hemat ${formatRupiah(getSavingsPerDay())}/hari` : 'Pengeluaran Sudah Ideal'}
-                                        </span>
+                                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                        <div className="flex items-center gap-1.5 bg-[#f2fbf4] dark:bg-green-950/30 px-3 py-1 rounded-full border border-green-100 dark:border-green-900/50 w-fit">
+                                            <FiCheck className="w-3.5 h-3.5 text-[#52933e]" />
+                                            <span className="text-xs font-bold text-[#52933e]">
+                                                {getSavingsPerDay() > 0 ? `Hemat ${formatRupiah(getSavingsPerDay())}/hari` : 'Pengeluaran Sudah Ideal'}
+                                            </span>
+                                        </div>
+                                        {getWarningText() && (
+                                            <div className="flex items-center gap-1.5 bg-amber-50/80 dark:bg-amber-950/30 px-3 py-1 rounded-full border border-amber-200/50 dark:border-amber-900/50 w-fit">
+                                                <svg className="w-3.5 h-3.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M12 9v4" />
+                                                    <path d="M12 17h.01" />
+                                                    <path d="M10.29 3.86l-8 14A1 1 0 003 20h18a1 1 0 00.86-1.5l-8-14a1 1 0 00-1.72 0z" />
+                                                </svg>
+                                                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                                                    {getWarningText()}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

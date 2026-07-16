@@ -6,7 +6,7 @@ import os
 import tensorflow as tf
 import joblib
 
-#https://paybae-production.up.railway.app/
+#https://paybae.up.railway.app/
 
 class TemporalAttention(tf.keras.layers.Layer):
     """Attention layer yang meng-highlight hari-hari paling relevan dari sequence."""
@@ -473,6 +473,32 @@ async def deep_recommend(user: UserInput):
     class_confidence   = float(class_probs[best_class])
 
     daily_income = user.monthly_income / 30
+    
+
+    sisa_hari_bulan_ini = max(1, 30 - user.day_of_month)
+    hari_yang_dicek = min(7, sisa_hari_bulan_ini)
+    prediksi_pengeluaran = avg_expense * hari_yang_dicek
+    avg_ratio = avg_expense / daily_income
+    
+    warning_msg = ""
+    
+    if prediksi_pengeluaran > user.balance:
+        best_class = 2 
+        best_action = 2 
+        class_confidence = 1.0
+        action_confidence = 1.0
+        warning_msg = f" [PERINGATAN: Saldo Anda terancam habis dalam {hari_yang_dicek} hari ke depan!]"
+    elif avg_ratio > 0.8:
+        best_class = 2 
+        best_action = 2
+        class_confidence = 1.0
+        action_confidence = 1.0
+        warning_msg = " [PERINGATAN: Pengeluaran harian Anda melebihi 80% dari pendapatan harian.]"
+    elif avg_ratio > 0.5:
+        best_class = max(best_class, 1) 
+        best_action = max(best_action, 3) 
+        warning_msg = " [Catatan: Pengeluaran harian Anda cukup tinggi.]"
+
     factor       = REDUCTION_MAP[best_action]
     target_exp   = avg_expense * (1 - max(0.0, factor))
     reduction_per_day = avg_expense * max(0.0, factor)
@@ -513,6 +539,8 @@ async def deep_recommend(user: UserInput):
             f"Rekomendasi: Model mendeteksi ruang untuk pengeluaran lebih "
             f"(tidak disarankan). Tetap bijak dalam membelanjakan uang Anda."
         )
+        
+    advice += warning_msg
 
     return DeepRecommendationResponse(
         action_id=best_action,
