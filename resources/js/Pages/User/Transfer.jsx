@@ -33,7 +33,6 @@ const BANKS = [
 ];
 
 const QUICK_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
-const ADMIN_FEE = 2500;
 
 const statusStyle = {
     PAID:      { badge: "bg-green-100 text-green-700", dot: "bg-green-500", label: "Berhasil" },
@@ -43,10 +42,16 @@ const statusStyle = {
 };
 
 export default function Transfer() {
-    const { auth, balance, recent_transfers = [] } = usePage().props;
+    const {
+        auth,
+        balance,
+        recent_transfers = [],
+        transfer_fee = 0,
+    } = usePage().props;
     const user = auth?.user || { name: "Ahmad" };
     // Default balance to 0 if not provided
     const userBalance = balance ?? 0;
+    const adminFee = Number(transfer_fee ?? 0);
 
     const EXPENSE_CATEGORIES = [
         { code: "Makanan & Minuman", label: "Makanan & Minuman", icon: "🍔" },
@@ -71,7 +76,7 @@ export default function Transfer() {
     const [loading, setLoading] = useState(false);
 
     const numAmount = parseInt(amount, 10) || 0;
-    const total = numAmount + ADMIN_FEE;
+    const total = numAmount + adminFee;
 
     // ─── Validasi Step 1 ──────────────────────────────────────────────────────
     const validateStep1 = () => {
@@ -464,7 +469,7 @@ export default function Transfer() {
                                         Biaya Admin
                                     </span>
                                     <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">
-                                        {formatRupiah(ADMIN_FEE)}
+                                        {formatRupiah(adminFee)}
                                     </span>
                                 </div>
                                 {numAmount > 0 && (
@@ -538,7 +543,7 @@ export default function Transfer() {
                                     },
                                     {
                                         label: "Biaya Admin",
-                                        value: formatRupiah(ADMIN_FEE),
+                                        value: formatRupiah(adminFee),
                                         icon: null,
                                     },
                                     {
