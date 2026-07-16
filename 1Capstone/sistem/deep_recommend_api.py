@@ -420,7 +420,7 @@ async def deep_recommend(user: UserInput):
 
     if is_new_or_zero_spend:
         advice = (
-            "[Deep Learning] Pola pengeluaran Anda: Hemat. "
+            "Pola pengeluaran Anda: Hemat. "
             "AI belum mendeteksi riwayat pengeluaran Anda. "
             "Mulailah bertransaksi untuk mendapatkan rekomendasi finansial dan prediksi tabungan."
         )
@@ -490,7 +490,7 @@ async def deep_recommend(user: UserInput):
     if factor > 0:
         target_per_day     = avg_expense - reduction_per_day
         advice = (
-            f"[Deep Learning] Pola pengeluaran Anda: {SPENDING_CLASS_LABEL[best_class]} "
+            f"Pola pengeluaran Anda: {SPENDING_CLASS_LABEL[best_class]} "
             f"(akurasi {class_confidence*100:.1f}%). "
             f"Rekomendasi: {ACTION_NAMES[best_action]}. "
             f"Target pengeluaran harian: Rp{target_per_day:,.0f} "
@@ -500,7 +500,7 @@ async def deep_recommend(user: UserInput):
         )
     elif factor == 0:
         advice = (
-            f"[Deep Learning] Pola pengeluaran Anda: {SPENDING_CLASS_LABEL[best_class]} "
+            f"Pola pengeluaran Anda: {SPENDING_CLASS_LABEL[best_class]} "
             f"(akurasi {class_confidence*100:.1f}%). "
             f"Rekomendasi: Pertahankan pengeluaran saat ini. "
             f"Keuangan Anda sudah dalam kondisi baik! "
@@ -508,7 +508,9 @@ async def deep_recommend(user: UserInput):
         )
     else:
         advice = (
-            f"[Deep Learning] Model mendeteksi ruang untuk pengeluaran lebih "
+            f"Pola pengeluaran Anda: {SPENDING_CLASS_LABEL[best_class]} "
+            f"(akurasi {class_confidence*100:.1f}%). "
+            f"Rekomendasi: Model mendeteksi ruang untuk pengeluaran lebih "
             f"(tidak disarankan). Tetap bijak dalam membelanjakan uang Anda."
         )
 

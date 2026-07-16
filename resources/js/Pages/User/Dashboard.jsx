@@ -93,20 +93,50 @@ export default function Dashboard() {
 
     const getCleanAdvice = (actionName, rawAdvice) => {
         if (aiLoading) return "Memuat rekomendasi AI...";
-        if (!rawAdvice) return "[Deep Learning] Pola pengeluaran Anda: Hemat. AI belum mendeteksi riwayat pengeluaran Anda. Mulailah bertransaksi untuk mendapatkan rekomendasi finansial dan prediksi tabungan.";
-        
-        let cleaned = rawAdvice.replace(/^\[(?:Deep Learning|XGBoost|Random Forest)\] Pola pengeluaran Anda:\s*[a-zA-Z\s]+\s*\([^)]*\)\.\s*/i, '');
-        
-        // Hapus teks "Potensi tabungan 30 hari: Rp..." dan "Akurasi Rekomendasi: ...%" karena sudah ada UI khususnya
-        cleaned = cleaned.replace(/Potensi tabungan 30 hari:\s*Rp[0-9,.]+\.\s*/i, '');
-        
-        return cleaned.trim();
+        if (!rawAdvice) return "Pola pengeluaran Anda: Hemat. AI belum mendeteksi riwayat pengeluaran Anda. Mulailah bertransaksi untuk mendapatkan rekomendasi finansial dan prediksi tabungan.";
+
+        // Hapus label hemat per hari beserta tanda kurung yang tersisa.
+        const cleanedAdvice = rawAdvice
+            .replace(/\(\s*Hemat\s*Rp[\d.,]+\s*\/\s*hari\s*\)/gi, "")
+            .replace(/\bHemat\s*Rp[\d.,]+\s*\/\s*hari\b/gi, "")
+            .replace(/\(\s*\)/g, "")
+            .replace(/\s{2,}/g, " ")
+            .replace(/\s+([.,!?;:])/g, "$1")
+            .trim();
+
+        return cleanedAdvice;
     };
 
     const getSavingsPerDay = () => {
         if (!aiData) return 0;
         // Gunakan predicted_savings.per_day dari backend (sudah dihitung Laravel)
         return aiData?.predicted_savings?.per_day || 0;
+    };
+
+    const getRecommendationMessage = () => {
+        if (aiLoading) return "Memuat rekomendasi AI...";
+        if (!aiData) return getCleanAdvice(aiData?.action_name, aiData?.advice);
+
+        const pattern = (aiData?.spending_pattern || "").toLowerCase();
+        const savings = getSavingsPerDay();
+
+        if (savings === 0 && (pattern === "hemat" || pattern === "normal")) {
+            return "Pengeluaran kamu sudah optimal, tidak perlu ada yang ditekan lagi.";
+        }
+
+        return getCleanAdvice(aiData?.action_name, aiData?.advice);
+    };
+
+    const getTabunganNote = () => {
+        if (aiLoading || !aiData) return null;
+        const pattern = (aiData?.spending_pattern || "").toLowerCase();
+        const savings = getSavingsPerDay();
+
+        if (savings === 0 && (pattern === "hemat" || pattern === "normal")) {
+            return "Pengeluaran kamu optimal jadi tidak ada yang perlu dihemat lagi.";
+        }
+
+        return null;
     };
 
     const getStatusName = () => {
@@ -376,7 +406,10 @@ export default function Dashboard() {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[10px] font-black text-blue-500 uppercase tracking-wider mb-1">PREDIKSI TABUNGAN KEDEPAN</p>
                                     <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed mb-1">
-                                        Jika mengikuti rekomendasi, potensi hemat kamu yang akan datang adalah :
+                                        {getSavingsPerDay() === 0 && (aiData?.spending_pattern || "").toLowerCase() !== "boros"
+                                            ? "Jika mengikuti rekomendasi, potensi hemat kamu yang akan datang adalah:"
+                                            : "Jika mengikuti rekomendasi, potensi hemat kamu yang akan datang adalah:"
+                                        }
                                     </p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                                         <div className="flex flex-col bg-blue-50/50 dark:bg-blue-950/20 rounded-xl p-3 border border-blue-100/50 dark:border-blue-900/30">
@@ -388,6 +421,11 @@ export default function Dashboard() {
                                             <span className="text-lg sm:text-xl font-bold text-indigo-500 dark:text-indigo-400 leading-none truncate">+{formatRupiah(aiLoading ? 0 : (aiData?.predicted_savings?.for_30_days || 0))}</span>
                                         </div>
                                     </div>
+                                    {getSavingsPerDay() === 0 && (aiData?.spending_pattern || "").toLowerCase() !== "boros" && (
+                                        <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed mt-3">
+                                            Pengeluaran mu sudah optimal, tidak ada yang perlu dihemat!
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
