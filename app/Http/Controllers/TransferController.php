@@ -16,7 +16,7 @@ class TransferController extends Controller
     /**
      * Biaya admin per transaksi transfer (dalam Rupiah).
      */
-    private const TRANSFER_FEE = 2500;
+    private const TRANSFER_FEE = 0;
 
     /**
      * Daftar bank tujuan transfer (disbursement) yang didukung Xendit.
